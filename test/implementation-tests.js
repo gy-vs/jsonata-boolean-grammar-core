@@ -1081,3 +1081,261 @@ function timeboxExpression(expr, timeout, maxDepth) {
         checkRunnaway();
     });
 }
+
+describe("Default operator ?:", function() {
+    it("should use the left-hand value when it is truthy", async function() {
+        var expr = jsonata("Customer.Nickname ?: Customer.Name");
+        var result = await expr.evaluate({Customer: {Nickname: "Mickey", Name: "Alice"}});
+        expect(result).to.equal("Mickey");
+    });
+
+    it("should fall back to the right-hand value when the left is an empty string", async function() {
+        var expr = jsonata("Customer.Nickname ?: Customer.Name");
+        var result = await expr.evaluate({Customer: {Nickname: "", Name: "Alice"}});
+        expect(result).to.equal("Alice");
+    });
+
+    it("should fall back when the left is zero, false, an empty array or an empty object", async function() {
+        expect(await jsonata("Value ?: 1").evaluate({Value: 0})).to.equal(1);
+        expect(await jsonata("Value ?: 1").evaluate({Value: false})).to.equal(1);
+        expect(await jsonata("Value ?: 1").evaluate({Value: []})).to.equal(1);
+        expect(await jsonata("Value ?: 1").evaluate({Value: {}})).to.equal(1);
+    });
+
+    it("should fall back when the left is null or does not exist", async function() {
+        expect(await jsonata("Value ?: 1").evaluate({Value: null})).to.equal(1);
+        expect(await jsonata("Value ?: 1").evaluate({})).to.equal(1);
+    });
+
+    it("should keep the left value when it is non-empty, non-zero or non-false", async function() {
+        expect(await jsonata("Value ?: 1").evaluate({Value: 42})).to.equal(42);
+        expect(await jsonata("Value ?: 1").evaluate({Value: "hi"})).to.equal("hi");
+        expect(await jsonata("Value ?: 1").evaluate({Value: [1, 2]})).to.deep.equal([1, 2]);
+    });
+
+    it("should chain left to right through multiple operators", async function() {
+        var expr = jsonata("Nickname ?: Alias ?: Name");
+        expect(await expr.evaluate({Name: "Bob"})).to.equal("Bob");
+        expect(await expr.evaluate({Alias: "Al", Name: "Bob"})).to.equal("Al");
+        expect(await expr.evaluate({Nickname: "Nick", Alias: "Al", Name: "Bob"})).to.equal("Nick");
+    });
+
+    it("should bind tighter than the equality operator", async function() {
+        var expr = jsonata("Status ?: 'draft' = 'draft'");
+        expect(await expr.evaluate({})).to.equal(true);
+        expect(await expr.evaluate({Status: "published"})).to.equal(false);
+    });
+
+    it("should evaluate the left-hand side exactly once", async function() {
+        var calls = 0;
+        var expr = jsonata("$fetchProfile($id).nickname ?: 'anon'");
+        expr.registerFunction("fetchProfile", async function(id) {
+            calls++;
+            return {nickname: undefined, name: "real-" + id};
+        }, "<s?:o>");
+        var result = await expr.evaluate({}, {id: "x7"});
+        expect(result).to.equal("anon");
+        expect(calls).to.equal(1);
+    });
+});
+
+describe("Nullish coalescing operator ??", function() {
+    it("should keep the left-hand value when it exists, even if it is falsy", async function() {
+        var expr = jsonata("Order.Qty ?? 1");
+        expect(await expr.evaluate({Order: {Qty: 0}})).to.equal(0);
+        expect(await expr.evaluate({Order: {Qty: 4}})).to.equal(4);
+    });
+
+    it("should fall back only when the left-hand side does not exist", async function() {
+        var expr = jsonata("Order.Qty ?? 1");
+        expect(await expr.evaluate({Order: {}})).to.equal(1);
+        expect(await expr.evaluate({})).to.equal(1);
+    });
+
+    it("should keep defined-but-falsy values", async function() {
+        expect(await jsonata("Value ?? 1").evaluate({Value: ""})).to.equal("");
+        expect(await jsonata("Value ?? 1").evaluate({Value: false})).to.equal(false);
+        expect(await jsonata("Value ?? 1").evaluate({Value: null})).to.equal(null);
+        var result = await jsonata("Value ?? 1").evaluate({Value: []});
+        expect(result).to.deep.equal([]);
+    });
+
+    it("should chain left to right through multiple operators", async function() {
+        var expr = jsonata("a ?? b ?? c");
+        expect(await expr.evaluate({c: "see"})).to.equal("see");
+        expect(await expr.evaluate({b: "bee", c: "see"})).to.equal("bee");
+        expect(await expr.evaluate({a: "ay", b: "bee", c: "see"})).to.equal("ay");
+    });
+
+    it("should evaluate the left-hand side exactly once", async function() {
+        var calls = 0;
+        var expr = jsonata("$fetchProfile($id).nickname ?? 'anon'");
+        expr.registerFunction("fetchProfile", async function(id) {
+            calls++;
+            return {nickname: "nicky-" + id};
+        }, "<s?:o>");
+        var result = await expr.evaluate({}, {id: "x7"});
+        expect(result).to.equal("nicky-x7");
+        expect(calls).to.equal(1);
+    });
+});
+
+describe("Default operators inside object constructors with the parent operator", function() {
+    var data = {
+        Account: {
+            Order: [
+                {
+                    OrderID: "order103",
+                    Product: [
+                        {SKU: "0406654608", Price: 34.45, Quantity: 2},
+                        {SKU: "0406634348", Price: 21.67, Quantity: 1}
+                    ]
+                },
+                {
+                    OrderID: "order104",
+                    Product: [
+                        {SKU: "040657863", Price: 34.45, Quantity: 4},
+                        {SKU: "0406654603", Price: 107.99, Quantity: 1}
+                    ]
+                }
+            ]
+        }
+    };
+
+    var expected = [
+        {sku: "0406654608", order: "order103"},
+        {sku: "0406634348", order: "order103"},
+        {sku: "040657863", order: "order104"},
+        {sku: "0406654603", order: "order104"}
+    ];
+
+    it("should resolve % to the same ancestor as the ternary form for ??", async function() {
+        var coalesce = jsonata(
+            "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ?? 'unknown' }"
+        );
+        var ternary = jsonata(
+            "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ? %.OrderID : 'unknown' }"
+        );
+        var result = await coalesce.evaluate(data);
+        expect(result).to.deep.equal(expected);
+        expect(await ternary.evaluate(data)).to.deep.equal(result);
+    });
+
+    it("should resolve % to the same ancestor as the ternary form for ?:", async function() {
+        var elvis = jsonata(
+            "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ?: 'unknown' }"
+        );
+        var ternary = jsonata(
+            "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ? %.OrderID : 'unknown' }"
+        );
+        var result = await elvis.evaluate(data);
+        expect(result).to.deep.equal(expected);
+        expect(await ternary.evaluate(data)).to.deep.equal(result);
+    });
+
+    it("should fall back when the ancestor field is missing", async function() {
+        var missing = JSON.parse(JSON.stringify(data));
+        delete missing.Account.Order[1].OrderID;
+        var coalesce = jsonata(
+            "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ?? 'unknown' }"
+        );
+        var result = await coalesce.evaluate(missing);
+        expect(result[2].order).to.equal("unknown");
+        expect(result[3].order).to.equal("unknown");
+        expect(result[0].order).to.equal("order103");
+    });
+});
+
+describe("AST representation of the default operators", function() {
+    it("should expose ?: as a binary node with traversable children", function() {
+        var ast = jsonata("Customer.Nickname ?: Customer.Name").ast();
+        expect(ast.type).to.equal("binary");
+        expect(ast.value).to.equal("?:");
+        expect(ast.lhs.type).to.equal("path");
+        expect(ast.rhs.type).to.equal("path");
+        expect(ast.lhs.steps[0].value).to.equal("Customer");
+        expect(ast.rhs.steps[0].value).to.equal("Customer");
+    });
+
+    it("should expose ?? as a binary node with traversable children", function() {
+        var ast = jsonata("Order.Qty ?? 1").ast();
+        expect(ast.type).to.equal("binary");
+        expect(ast.value).to.equal("??");
+        expect(ast.lhs.type).to.equal("path");
+        expect(ast.rhs.type).to.equal("number");
+    });
+
+    it("should parse chains left-associatively", function() {
+        var ast = jsonata("a ?? b ?? c").ast();
+        expect(ast.value).to.equal("??");
+        expect(ast.rhs.type).to.equal("path");
+        expect(ast.lhs.type).to.equal("binary");
+        expect(ast.lhs.value).to.equal("??");
+    });
+
+    it("should leave the ternary AST unchanged", function() {
+        var ast = jsonata("a ? b : c").ast();
+        expect(ast.type).to.equal("condition");
+        expect(ast.condition.steps[0].value).to.equal("a");
+        expect(ast.then.steps[0].value).to.equal("b");
+        expect(ast.else.steps[0].value).to.equal("c");
+    });
+});
+
+describe("Parser handling of the default operators", function() {
+    it("should throw S0207 with a position when the right-hand side of ?: is missing", function() {
+        try {
+            jsonata("Name ?:");
+            expect(false).to.equal(true);
+        } catch (err) {
+            expect(err.code).to.equal("S0207");
+            expect(err.position).to.equal(7);
+        }
+    });
+
+    it("should throw S0207 with a position when the right-hand side of ?? is missing", function() {
+        try {
+            jsonata("Name ??");
+            expect(false).to.equal(true);
+        } catch (err) {
+            expect(err.code).to.equal("S0207");
+            expect(err.position).to.equal(7);
+        }
+    });
+
+    it("should report the same code as a ternary missing its branch", function() {
+        expect(function() {
+            jsonata("Name ?");
+        }).to.throw().with.property("code", "S0207");
+    });
+
+    it("should report S0211 when the operator appears without a left operand", function() {
+        expect(function() {
+            jsonata("?: 1");
+        }).to.throw().with.property("code", "S0211");
+        expect(function() {
+            jsonata("?? 1");
+        }).to.throw().with.property("code", "S0211");
+    });
+
+    it("should recover from a missing right-hand side", function() {
+        var expr = jsonata("Name ?? 1", {recover: true});
+        expect(expr.errors()).to.equal(undefined);
+        var ast = expr.ast();
+        expect(ast.type).to.equal("binary");
+        expect(ast.value).to.equal("??");
+        var broken = jsonata("Name ??", {recover: true});
+        expect(broken.errors()[0].code).to.equal("S0207");
+    });
+
+    it("should not interfere with existing question mark usage", async function() {
+        // ternary, with and without spaces
+        expect(await jsonata("a ? b : c").evaluate({a: true, b: "B", c: "C"})).to.equal("B");
+        expect(await jsonata("a?b:c").evaluate({a: false, b: "B", c: "C"})).to.equal("C");
+        // partial function application placeholder
+        expect(await jsonata("$substring(?, 0, 3)('hello')").evaluate({})).to.equal("hel");
+        // lazy quantifier inside a regex literal
+        expect(await jsonata("$contains('color', /colou??r/)").evaluate({})).to.equal(true);
+        expect(await jsonata("$contains('colour', /colou??r/)").evaluate({})).to.equal(true);
+    });
+});

@@ -1,0 +1,257 @@
+[
+    {
+        "expr": "Customer.Nickname ?: Customer.Name",
+        "data": {"Customer": {"Nickname": "", "Name": "Alice"}},
+        "bindings": {},
+        "result": "Alice"
+    },
+    {
+        "expr": "Customer.Nickname ?: Customer.Name",
+        "data": {"Customer": {"Nickname": "Mickey", "Name": "Alice"}},
+        "bindings": {},
+        "result": "Mickey"
+    },
+    {
+        "expr": "Customer.Nickname ?: Customer.Name",
+        "data": {"Customer": {"Name": "Alice"}},
+        "bindings": {},
+        "result": "Alice"
+    },
+    {
+        "expr": "Value ?: 1",
+        "data": {"Value": 0},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "Value ?: 1",
+        "data": {"Value": false},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "Value ?: 1",
+        "data": {"Value": []},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "Value ?: 1",
+        "data": {"Value": {}},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "Value ?: 1",
+        "data": {"Value": null},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "Value ?: 1",
+        "data": {"Value": "hello"},
+        "bindings": {},
+        "result": "hello"
+    },
+    {
+        "expr": "Value ?: 1",
+        "data": {"Value": [2]},
+        "bindings": {},
+        "result": [2]
+    },
+    {
+        "expr": "Nickname ?: Alias ?: Name",
+        "data": {"Name": "Bob"},
+        "bindings": {},
+        "result": "Bob"
+    },
+    {
+        "expr": "Nickname ?: Alias ?: Name",
+        "data": {"Alias": "Al", "Name": "Bob"},
+        "bindings": {},
+        "result": "Al"
+    },
+    {
+        "expr": "Nickname ?: Alias ?: Name",
+        "data": {"Nickname": "Nick", "Alias": "Al", "Name": "Bob"},
+        "bindings": {},
+        "result": "Nick"
+    },
+    {
+        "expr": "Status ?: 'draft' = 'draft'",
+        "data": {},
+        "bindings": {},
+        "result": true
+    },
+    {
+        "expr": "Status ?: 'draft' = 'draft'",
+        "data": {"Status": "published"},
+        "bindings": {},
+        "result": false
+    },
+    {
+        "expr": "(Status ?: 'draft') = 'draft'",
+        "data": {},
+        "bindings": {},
+        "result": true
+    },
+    {
+        "expr": "0 ?: 'a' ?: 'b'",
+        "data": {},
+        "bindings": {},
+        "result": "a"
+    },
+    {
+        "expr": "'' ?: false ?: 42",
+        "data": {},
+        "bindings": {},
+        "result": 42
+    },
+    {
+        "expr": "Order.Qty ?? 1",
+        "data": {"Order": {"Qty": 0}},
+        "bindings": {},
+        "result": 0
+    },
+    {
+        "expr": "Order.Qty ?? 1",
+        "data": {"Order": {"Qty": 4}},
+        "bindings": {},
+        "result": 4
+    },
+    {
+        "expr": "Order.Qty ?? 1",
+        "data": {"Order": {}},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "Order.Qty ?? 1",
+        "data": {},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "Value ?? 1",
+        "data": {"Value": ""},
+        "bindings": {},
+        "result": ""
+    },
+    {
+        "expr": "Value ?? 1",
+        "data": {"Value": false},
+        "bindings": {},
+        "result": false
+    },
+    {
+        "expr": "Value ?? 1",
+        "data": {"Value": null},
+        "bindings": {},
+        "result": null
+    },
+    {
+        "expr": "Value ?? 1",
+        "data": {"Value": []},
+        "bindings": {},
+        "result": []
+    },
+    {
+        "expr": "Value ?? 1",
+        "data": {"Value": {}},
+        "bindings": {},
+        "result": {}
+    },
+    {
+        "expr": "a ?? b ?? c",
+        "data": {"c": "see"},
+        "bindings": {},
+        "result": "see"
+    },
+    {
+        "expr": "a ?? b ?? c",
+        "data": {"b": "bee", "c": "see"},
+        "bindings": {},
+        "result": "bee"
+    },
+    {
+        "expr": "0 ?? 1 ?: 2",
+        "data": {},
+        "bindings": {},
+        "result": 2
+    },
+    {
+        "expr": "0 ?? 1",
+        "data": {},
+        "bindings": {},
+        "result": 0
+    },
+    {
+        "expr": "0 ?: 1 ?? 2",
+        "data": {},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ?? 'unknown' }",
+        "dataset": "dataset5",
+        "bindings": {},
+        "result": [
+            {"sku": "0406654608", "order": "order103"},
+            {"sku": "0406634348", "order": "order103"},
+            {"sku": "040657863", "order": "order104"},
+            {"sku": "0406654603", "order": "order104"}
+        ]
+    },
+    {
+        "expr": "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ?: 'unknown' }",
+        "dataset": "dataset5",
+        "bindings": {},
+        "result": [
+            {"sku": "0406654608", "order": "order103"},
+            {"sku": "0406634348", "order": "order103"},
+            {"sku": "040657863", "order": "order104"},
+            {"sku": "0406654603", "order": "order104"}
+        ]
+    },
+    {
+        "expr": "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ? %.OrderID : 'unknown' }",
+        "dataset": "dataset5",
+        "bindings": {},
+        "result": [
+            {"sku": "0406654608", "order": "order103"},
+            {"sku": "0406634348", "order": "order103"},
+            {"sku": "040657863", "order": "order104"},
+            {"sku": "0406654603", "order": "order104"}
+        ]
+    },
+    {
+        "expr": "a ?: b ?? 'default'",
+        "data": {"b": ""},
+        "bindings": {},
+        "result": ""
+    },
+    {
+        "expr": "a ?? b ?: 'default'",
+        "data": {"b": ""},
+        "bindings": {},
+        "result": "default"
+    },
+    {
+        "expr": "a ?? b ?: 'default'",
+        "data": {"b": "set"},
+        "bindings": {},
+        "result": "set"
+    },
+    {
+        "expr": "Missing ?: 1 + 2",
+        "data": {},
+        "bindings": {},
+        "result": 3
+    },
+    {
+        "expr": "'yes' ?: 'no' = 'yes'",
+        "data": {},
+        "bindings": {},
+        "result": true
+    }
+]

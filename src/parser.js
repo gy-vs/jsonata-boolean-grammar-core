@@ -23,6 +23,8 @@ const parser = (() => {
         ';': 80,
         ':': 80,
         '?': 20,
+        '??': 45,
+        '?:': 45,
         '+': 50,
         '-': 50,
         '*': 60,
@@ -197,6 +199,13 @@ const parser = (() => {
                 // ~>  chain function
                 position += 2;
                 return create('operator', '~>');
+            }
+            if (currentChar === '?' && (path.charAt(position + 1) === ':' ||
+                path.charAt(position + 1) === '?')) {
+                // ?:  default operator (truthiness); ??  nullish coalescing operator (existence)
+                var qoperator = currentChar + path.charAt(position + 1);
+                position += 2;
+                return create('operator', qoperator);
             }
             // test for single char operators
             if (Object.prototype.hasOwnProperty.call(operators, currentChar)) {
@@ -848,6 +857,11 @@ const parser = (() => {
             }
             return this;
         });
+
+        // default operator ?: - returns lhs if truthy (per $boolean), otherwise rhs
+        infix("?:");
+        // nullish coalescing operator ?? - returns lhs if it exists (per $exists), otherwise rhs
+        infix("??");
 
         // object transformer
         prefix("|", function () {

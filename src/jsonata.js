@@ -461,6 +461,20 @@ var jsonata = (function() {
                 throw err;
             }
         }
+        if (op === '?:') {
+            // default operator - lhs is only evaluated once; rhs is lazily evaluated
+            if (fn.boolean(lhs)) {
+                return lhs;
+            }
+            return await evalrhs();
+        }
+        if (op === '??') {
+            // nullish coalescing operator - only fall through if lhs does not exist
+            if (typeof lhs !== 'undefined') {
+                return lhs;
+            }
+            return await evalrhs();
+        }
 
         var rhs = await evalrhs();
         try {
