@@ -1039,6 +1039,138 @@ describe("Tests that use internal frame push callbacks", () => {
     });
 });
 
+describe("Default value operators (?: and ??)", () => {
+    describe("AST structure", function() {
+        it("elvis operator produces a binary node with value '?:'", function() {
+            var ast = jsonata("Customer.Nickname ?: Customer.Name").ast();
+            expect(ast.type).to.equal("binary");
+            expect(ast.value).to.equal("?:");
+            expect(ast.lhs.type).to.equal("path");
+            expect(ast.rhs.type).to.equal("path");
+        });
+        it("nullish coalescing operator produces a binary node with value '??'", function() {
+            var ast = jsonata("Order.Qty ?? 1").ast();
+            expect(ast.type).to.equal("binary");
+            expect(ast.value).to.equal("??");
+            expect(ast.lhs.type).to.equal("path");
+            expect(ast.rhs.type).to.equal("number");
+        });
+        it("elvis and nullish operators are distinguishable in the AST", function() {
+            expect(jsonata("a ?: b").ast().value).to.not.equal(jsonata("a ?? b").ast().value);
+        });
+        it("chained elvis operators associate to the left", function() {
+            var ast = jsonata("Nickname ?: Alias ?: Name").ast();
+            expect(ast.value).to.equal("?:");
+            expect(ast.lhs.type).to.equal("binary");
+            expect(ast.lhs.value).to.equal("?:");
+            expect(ast.rhs.type).to.equal("path");
+        });
+        it("ternary operator AST structure is unchanged", function() {
+            var ast = jsonata("a ? b : c").ast();
+            expect(ast.type).to.equal("condition");
+            expect(ast.condition.type).to.equal("path");
+            expect(ast.then.type).to.equal("path");
+            expect(ast.else.type).to.equal("path");
+        });
+        it("partial application placeholder is unchanged", function() {
+            var ast = jsonata("$substring(?, 0, 3)").ast();
+            expect(ast.type).to.equal("partial");
+            expect(ast.arguments[0].type).to.equal("operator");
+            expect(ast.arguments[0].value).to.equal("?");
+        });
+    });
+    describe("LHS is evaluated exactly once", function() {
+        it("elvis operator with truthy lhs", async function() {
+            var calls = 0;
+            var expr = jsonata("$fetchProfile(id).nickname ?: 'anon'");
+            expr.registerFunction("fetchProfile", async function() {
+                calls++;
+                return {nickname: "Fred"};
+            }, "<s-:o>");
+            var result = await expr.evaluate({id: "u1"});
+            expect(result).to.equal("Fred");
+            expect(calls).to.equal(1);
+        });
+        it("elvis operator with falsy lhs", async function() {
+            var calls = 0;
+            var expr = jsonata("$fetchProfile(id).nickname ?: 'anon'");
+            expr.registerFunction("fetchProfile", async function() {
+                calls++;
+                return {};
+            }, "<s-:o>");
+            var result = await expr.evaluate({id: "u1"});
+            expect(result).to.equal("anon");
+            expect(calls).to.equal(1);
+        });
+        it("nullish coalescing operator with existing lhs", async function() {
+            var calls = 0;
+            var expr = jsonata("$fetchProfile(id).nickname ?? 'anon'");
+            expr.registerFunction("fetchProfile", async function() {
+                calls++;
+                return {nickname: ""};
+            }, "<s-:o>");
+            var result = await expr.evaluate({id: "u1"});
+            expect(result).to.equal("");
+            expect(calls).to.equal(1);
+        });
+        it("nullish coalescing operator with missing lhs", async function() {
+            var calls = 0;
+            var expr = jsonata("$fetchProfile(id).nickname ?? 'anon'");
+            expr.registerFunction("fetchProfile", async function() {
+                calls++;
+                return {};
+            }, "<s-:o>");
+            var result = await expr.evaluate({id: "u1"});
+            expect(result).to.equal("anon");
+            expect(calls).to.equal(1);
+        });
+    });
+    describe("Errors", function() {
+        it("elvis operator with missing rhs reports S0207 with position", function() {
+            expect(function() {
+                jsonata("Name ?:");
+            }).to.throw().with.property("code", "S0207");
+            try {
+                jsonata("Name ?:");
+            } catch (err) {
+                expect(err.position).to.equal(7);
+            }
+        });
+        it("nullish coalescing operator with missing rhs reports S0207 with position", function() {
+            expect(function() {
+                jsonata("Name ??");
+            }).to.throw().with.property("code", "S0207");
+            try {
+                jsonata("Name ??");
+            } catch (err) {
+                expect(err.position).to.equal(7);
+            }
+        });
+        it("error in rhs of elvis operator is reported with the operator position", async function() {
+            var expr = jsonata("false ?: 1 + 'x'");
+            try {
+                await expr.evaluate({});
+                throw new Error("expected evaluation to fail");
+            } catch (err) {
+                expect(err.code).to.equal("T2002");
+                expect(err.position).to.equal(8);
+                expect(err.token).to.equal("?:");
+            }
+        });
+        it("error in rhs of nullish coalescing operator is reported with the operator position", async function() {
+            var expr = jsonata("missing ?? 1 + 'x'");
+            try {
+                await expr.evaluate({});
+                throw new Error("expected evaluation to fail");
+            } catch (err) {
+                expect(err.code).to.equal("T2002");
+                expect(err.position).to.equal(10);
+                expect(err.token).to.equal("??");
+            }
+        });
+    });
+});
+
 /**
  * Protect the process/browser from a runnaway expression
  * i.e. Infinite loop (tail recursion), or excessive stack growth

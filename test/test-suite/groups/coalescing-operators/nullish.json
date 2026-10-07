@@ -1,0 +1,157 @@
+[
+    {
+        "expr": "Order.Qty ?? 1",
+        "data": {"Order": {"Qty": 0}},
+        "bindings": {},
+        "result": 0
+    },
+    {
+        "expr": "Order.Qty ?? 1",
+        "data": {"Order": {"Qty": 5}},
+        "bindings": {},
+        "result": 5
+    },
+    {
+        "expr": "Order.Qty ?? 1",
+        "data": {"Order": {}},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "Account.Missing ?? 0",
+        "data": {"Account": {}},
+        "bindings": {},
+        "result": 0
+    },
+    {
+        "expr": "A ?? 'fallback'",
+        "data": {"A": false},
+        "bindings": {},
+        "result": false
+    },
+    {
+        "expr": "A ?? 'fallback'",
+        "data": {"A": ""},
+        "bindings": {},
+        "result": ""
+    },
+    {
+        "expr": "A ?? 'fallback'",
+        "data": {"A": null},
+        "bindings": {},
+        "result": null
+    },
+    {
+        "expr": "A ?? 'fallback'",
+        "data": {"A": []},
+        "bindings": {},
+        "result": []
+    },
+    {
+        "expr": "A ?? 'fallback'",
+        "data": {"A": {}},
+        "bindings": {},
+        "result": {}
+    },
+    {
+        "expr": "A ?? 'fallback'",
+        "data": {"A": 0},
+        "bindings": {},
+        "result": 0
+    },
+    {
+        "expr": "Missing ?? 'fallback'",
+        "data": {},
+        "bindings": {},
+        "result": "fallback"
+    },
+    {
+        "expr": "A ?? B ?? 3",
+        "data": {"A": 1, "B": 2},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "A ?? B ?? 3",
+        "data": {"B": 2},
+        "bindings": {},
+        "result": 2
+    },
+    {
+        "expr": "A ?? B ?? 3",
+        "data": {},
+        "bindings": {},
+        "result": 3
+    },
+    {
+        "expr": "A ?? B ?? C",
+        "data": {},
+        "bindings": {},
+        "undefinedResult": true
+    },
+    {
+        "expr": "Status ?? 'draft' = 'draft'",
+        "data": {},
+        "bindings": {},
+        "result": true
+    },
+    {
+        "expr": "Status ?? 'draft' = 'draft'",
+        "data": {"Status": "live"},
+        "bindings": {},
+        "result": false
+    },
+    {
+        "expr": "1 ?? $error('boom')",
+        "data": {},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "0 ?? $error('boom')",
+        "data": {},
+        "bindings": {},
+        "result": 0
+    },
+    {
+        "expr": "{ 'qty': Qty ?? 1 }",
+        "data": {"Qty": 0},
+        "bindings": {},
+        "result": {"qty": 0}
+    },
+    {
+        "expr": "{ 'qty': Qty ?? 1 }",
+        "data": {},
+        "bindings": {},
+        "result": {"qty": 1}
+    },
+    {
+        "expr": "Qty ?? 1",
+        "data": {"Qty": 0},
+        "bindings": {},
+        "result": 0
+    },
+    {
+        "expr": "Qty ?: 1",
+        "data": {"Qty": 0},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ?? 'unknown' }",
+        "dataset": "dataset5",
+        "bindings": {},
+        "result": [
+            {"sku": "0406654608", "order": "order103"},
+            {"sku": "0406634348", "order": "order103"},
+            {"sku": "040657863", "order": "order104"},
+            {"sku": "0406654603", "order": "order104"}
+        ]
+    },
+    {
+        "expr": "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ?? 'unknown' }",
+        "data": {"Account": {"Order": [{"Product": [{"SKU": "s1"}]}]}},
+        "bindings": {},
+        "result": {"sku": "s1", "order": "unknown"}
+    }
+]

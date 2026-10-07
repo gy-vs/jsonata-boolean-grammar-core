@@ -23,6 +23,8 @@ const parser = (() => {
         ';': 80,
         ':': 80,
         '?': 20,
+        '?:': 45,
+        '??': 45,
         '+': 50,
         '-': 50,
         '*': 60,
@@ -197,6 +199,16 @@ const parser = (() => {
                 // ~>  chain function
                 position += 2;
                 return create('operator', '~>');
+            }
+            if (currentChar === '?' && path.charAt(position + 1) === ':') {
+                // ?:  default (elvis) operator
+                position += 2;
+                return create('operator', '?:');
+            }
+            if (currentChar === '?' && path.charAt(position + 1) === '?') {
+                // ??  nullish coalescing operator
+                position += 2;
+                return create('operator', '??');
             }
             // test for single char operators
             if (Object.prototype.hasOwnProperty.call(operators, currentChar)) {
@@ -848,6 +860,12 @@ const parser = (() => {
             }
             return this;
         });
+
+        // elvis (default value) operator - lhs if truthy, otherwise rhs
+        infix("?:");
+
+        // nullish coalescing operator - lhs if it exists, otherwise rhs
+        infix("??");
 
         // object transformer
         prefix("|", function () {

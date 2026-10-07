@@ -461,6 +461,15 @@ var jsonata = (function() {
                 throw err;
             }
         }
+        if (op === "?:" || op === "??") {
+            try {
+                return await evaluateDefaultExpression(lhs, evalrhs, op);
+            } catch(err) {
+                err.position = expr.position;
+                err.token = op;
+                throw err;
+            }
+        }
 
         var rhs = await evalrhs();
         try {
@@ -865,6 +874,23 @@ var jsonata = (function() {
     function boolize(value) {
         var booledValue = fn.boolean(value);
         return typeof booledValue === 'undefined' ? false : booledValue;
+    }
+
+    /**
+     * Evaluate the default value operators (?: and ??) against input data
+     * The LHS has already been evaluated (exactly once); the RHS is only evaluated when needed
+     * @param {Object} lhs - LHS value
+     * @param {Function} evalrhs - function to evaluate RHS value
+     * @param {Object} op - opcode
+     * @returns {*} Result
+     */
+    async function evaluateDefaultExpression(lhs, evalrhs, op) {
+        if (op === "?:") {
+            // elvis operator - returns the lhs if it is truthy (as defined by $boolean), otherwise the rhs
+            return boolize(lhs) ? lhs : await evalrhs();
+        }
+        // nullish coalescing operator - returns the lhs if it exists (as defined by $exists), otherwise the rhs
+        return typeof lhs !== 'undefined' ? lhs : await evalrhs();
     }
 
     /**

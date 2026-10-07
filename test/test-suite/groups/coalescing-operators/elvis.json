@@ -1,0 +1,241 @@
+[
+    {
+        "expr": "Customer.Nickname ?: Customer.Name",
+        "data": {"Customer": {"Nickname": "Bob", "Name": "Robert"}},
+        "bindings": {},
+        "result": "Bob"
+    },
+    {
+        "expr": "Customer.Nickname ?: Customer.Name",
+        "data": {"Customer": {"Nickname": "", "Name": "Robert"}},
+        "bindings": {},
+        "result": "Robert"
+    },
+    {
+        "expr": "Customer.Nickname ?: Customer.Name",
+        "data": {"Customer": {"Name": "Robert"}},
+        "bindings": {},
+        "result": "Robert"
+    },
+    {
+        "expr": "order ?: 'none'",
+        "data": {"order": "order103"},
+        "bindings": {},
+        "result": "order103"
+    },
+    {
+        "expr": "order ?: 'none'",
+        "data": {},
+        "bindings": {},
+        "result": "none"
+    },
+    {
+        "expr": "Order.Qty ?: 1",
+        "data": {"Order": {"Qty": 0}},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "Order.Qty ?: 1",
+        "data": {"Order": {"Qty": 5}},
+        "bindings": {},
+        "result": 5
+    },
+    {
+        "expr": "A ?: 'fallback'",
+        "data": {"A": false},
+        "bindings": {},
+        "result": "fallback"
+    },
+    {
+        "expr": "A ?: 'fallback'",
+        "data": {"A": ""},
+        "bindings": {},
+        "result": "fallback"
+    },
+    {
+        "expr": "A ?: 'fallback'",
+        "data": {"A": null},
+        "bindings": {},
+        "result": "fallback"
+    },
+    {
+        "expr": "A ?: 'fallback'",
+        "data": {"A": []},
+        "bindings": {},
+        "result": "fallback"
+    },
+    {
+        "expr": "A ?: 'fallback'",
+        "data": {"A": {}},
+        "bindings": {},
+        "result": "fallback"
+    },
+    {
+        "expr": "A ?: 'fallback'",
+        "data": {"A": true},
+        "bindings": {},
+        "result": true
+    },
+    {
+        "expr": "A ?: 'fallback'",
+        "data": {"A": "x"},
+        "bindings": {},
+        "result": "x"
+    },
+    {
+        "expr": "A ?: 'fallback'",
+        "data": {"A": 42},
+        "bindings": {},
+        "result": 42
+    },
+    {
+        "expr": "A ?: 'fallback'",
+        "data": {"A": [1]},
+        "bindings": {},
+        "result": [1]
+    },
+    {
+        "expr": "A ?: 'fallback'",
+        "data": {"A": {"b": 1}},
+        "bindings": {},
+        "result": {"b": 1}
+    },
+    {
+        "expr": "Missing ?: 'fallback'",
+        "data": {},
+        "bindings": {},
+        "result": "fallback"
+    },
+    {
+        "expr": "Nickname ?: Alias ?: Name",
+        "data": {"Nickname": "nick", "Alias": "al", "Name": "nm"},
+        "bindings": {},
+        "result": "nick"
+    },
+    {
+        "expr": "Nickname ?: Alias ?: Name",
+        "data": {"Nickname": "", "Alias": "al", "Name": "nm"},
+        "bindings": {},
+        "result": "al"
+    },
+    {
+        "expr": "Nickname ?: Alias ?: Name",
+        "data": {"Nickname": "", "Alias": "", "Name": "nm"},
+        "bindings": {},
+        "result": "nm"
+    },
+    {
+        "expr": "Nickname ?: Alias ?: Name",
+        "data": {},
+        "bindings": {},
+        "undefinedResult": true
+    },
+    {
+        "expr": "Status ?: 'draft' = 'draft'",
+        "data": {},
+        "bindings": {},
+        "result": true
+    },
+    {
+        "expr": "Status ?: 'draft' = 'draft'",
+        "data": {"Status": "live"},
+        "bindings": {},
+        "result": false
+    },
+    {
+        "expr": "Status ?: 'live' = 'live'",
+        "data": {"Status": "live"},
+        "bindings": {},
+        "result": true
+    },
+    {
+        "expr": "A and B ?: 'x'",
+        "data": {"A": true, "B": ""},
+        "bindings": {},
+        "result": true
+    },
+    {
+        "expr": "Name ?: 'a' & 'b'",
+        "data": {},
+        "bindings": {},
+        "result": "ab"
+    },
+    {
+        "expr": "true ?: $error('boom')",
+        "data": {},
+        "bindings": {},
+        "result": true
+    },
+    {
+        "expr": "1 ?: $error('boom')",
+        "data": {},
+        "bindings": {},
+        "result": 1
+    },
+    {
+        "expr": "{ 'name': Nickname ?: 'anon' }",
+        "data": {"Nickname": ""},
+        "bindings": {},
+        "result": {"name": "anon"}
+    },
+    {
+        "expr": "A ? B ?: 'b' : C ?: 'c'",
+        "data": {"A": true},
+        "bindings": {},
+        "result": "b"
+    },
+    {
+        "expr": "A ? B ?: 'b' : C ?: 'c'",
+        "data": {"A": false, "C": "see"},
+        "bindings": {},
+        "result": "see"
+    },
+    {
+        "expr": "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ?: 'unknown' }",
+        "dataset": "dataset5",
+        "bindings": {},
+        "result": [
+            {"sku": "0406654608", "order": "order103"},
+            {"sku": "0406634348", "order": "order103"},
+            {"sku": "040657863", "order": "order104"},
+            {"sku": "0406654603", "order": "order104"}
+        ]
+    },
+    {
+        "expr": "Account.Order.Product.{ 'sku': SKU, 'order': %.OrderID ?: 'unknown' }",
+        "data": {"Account": {"Order": [{"Product": [{"SKU": "s1"}]}]}},
+        "bindings": {},
+        "result": {"sku": "s1", "order": "unknown"}
+    },
+    {
+        "expr": "A ? 'yes' : 'no'",
+        "data": {"A": true},
+        "bindings": {},
+        "result": "yes"
+    },
+    {
+        "expr": "A?'yes':'no'",
+        "data": {"A": false},
+        "bindings": {},
+        "result": "no"
+    },
+    {
+        "expr": "( $sub := $substring(?, 0, 3); $sub('abcdef') )",
+        "data": {},
+        "bindings": {},
+        "result": "abc"
+    },
+    {
+        "expr": "$contains('color', /colou??r/)",
+        "data": {},
+        "bindings": {},
+        "result": true
+    },
+    {
+        "expr": "$contains('colour', /colou??r/)",
+        "data": {},
+        "bindings": {},
+        "result": true
+    }
+]
